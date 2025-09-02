@@ -1,0 +1,18 @@
+import "package:firebase_messaging/firebase_messaging.dart";
+import "package:flutter/foundation.dart" show ValueChanged;
+
+import "../push_token_generator.dart";
+
+class FirebasePushTokenGenerator with PushTokenGenerator {
+  final _messaging = FirebaseMessaging.instance;
+  @override
+  Future<void> generateToken({required ValueChanged<String> onSuccess, required ValueChanged<String> onFailure}) async {
+    final String? token = await _messaging.getToken();
+    if (token != null) {
+      onSuccess(token);
+    } else {
+      onFailure("Failed to Fetch Token");
+    }
+  }
+
+}
