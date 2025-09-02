@@ -1,13 +1,8 @@
-/*
-fun interface PushHandler {
-    /**
-     * Handles a push message. Contents
-     * @param message the push message model abstraction
-     * */
-    fun handle(message: PushMessage)
-}
-* */
+import "push_message.dart";
 
 abstract class PushHandler {
-
+    /// Handles a push message contents
+    /// @param message the push message model abstraction
+    ///
+  void handle(PushMessage message);
 }
