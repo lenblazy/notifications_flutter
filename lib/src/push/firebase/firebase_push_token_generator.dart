@@ -3,7 +3,7 @@ import "package:flutter/foundation.dart" show ValueChanged;
 
 import "../push_token_generator.dart";
 
-class FirebasePushTokenGenerator with PushTokenGenerator {
+class FirebasePushTokenGenerator implements PushTokenGenerator {
   final _messaging = FirebaseMessaging.instance;
   @override
   Future<void> generateToken({required ValueChanged<String> onSuccess, required ValueChanged<String> onFailure}) async {

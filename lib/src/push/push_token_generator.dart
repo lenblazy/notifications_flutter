@@ -2,7 +2,7 @@ import "package:flutter/foundation.dart" show ValueChanged, VoidCallback;
 
 /// Handles generating push tokens.
 ///
-mixin PushTokenGenerator {
+abstract class PushTokenGenerator {
   /// Handles generation of a Push Token
   /// Usage: -
   /// generate(
