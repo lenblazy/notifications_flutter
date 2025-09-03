@@ -6,6 +6,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i687;
 
+import 'package:firebase_core/firebase_core.dart' as _i982;
+import 'package:firebase_messaging/firebase_messaging.dart' as _i892;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:notifications_flutter/src/di/notifications_module.dart'
     as _i431;
@@ -24,14 +26,18 @@ class NotificationsFlutterPackageModule extends _i526.MicroPackageModule {
   @override
   _i687.FutureOr<void> init(_i526.GetItHelper gh) async {
     final notificationsModule = _$NotificationsModule();
+    await gh.factoryAsync<_i982.FirebaseApp>(
+      () => notificationsModule.provideFirebaseApp(),
+      preResolve: true,
+    );
     await gh.factoryAsync<_i754.NotificationFactory>(
       () => notificationsModule.notificationsFactory(),
       preResolve: true,
     );
+    gh.lazySingleton<_i892.FirebaseMessaging>(
+        () => notificationsModule.firebaseMessaging());
     gh.lazySingleton<_i216.PushMessageMapper>(
         () => notificationsModule.pushMapper());
-    gh.lazySingleton<_i773.PushTokenGenerator>(
-        () => notificationsModule.tokenGenerator());
     gh.lazySingleton<_i82.PushHandler>(() => notificationsModule.pushHandler(
         factory: gh<_i754.NotificationFactory>()));
     gh.lazySingleton<_i590.AppFirebaseMessagingService>(
@@ -39,6 +45,8 @@ class NotificationsFlutterPackageModule extends _i526.MicroPackageModule {
               gh<_i82.PushHandler>(),
               gh<_i216.PushMessageMapper>(),
             ));
+    gh.lazySingleton<_i773.PushTokenGenerator>(() => notificationsModule
+        .tokenGenerator(messaging: gh<_i892.FirebaseMessaging>()));
   }
 }
 
