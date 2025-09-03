@@ -5,15 +5,18 @@ import "../../../notifications.dart";
 import "notification_factory.dart";
 
 class AppNotificationFactory extends NotificationFactory {
-  AppNotificationFactory._();
+  AppNotificationFactory({required FlutterLocalNotificationsPlugin plugin})
+      : _localNotifications = plugin;
+
+  AppNotificationFactory._() : _localNotifications = FlutterLocalNotificationsPlugin();
+
+  final FlutterLocalNotificationsPlugin _localNotifications;
 
   static Future<AppNotificationFactory> create() async {
     final factory = AppNotificationFactory._();
     await factory._init();
     return factory;
   }
-
-  final _localNotifications = FlutterLocalNotificationsPlugin();
 
   final _notificationDetails = const NotificationDetails(
     android: AndroidNotificationDetails(
@@ -32,16 +35,16 @@ class AppNotificationFactory extends NotificationFactory {
   );
 
   static Future<void> onDidReceiveNotification(
-    NotificationResponse response,
-  ) async {
+      NotificationResponse response,
+      ) async {
     debugPrint("Notification clicked: ${response.payload}");
   }
 
   Future<void> _init() async {
+    // Ask for permissions (Android 13+)
     await _localNotifications
         .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
+        AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
 
     const initializationSettingsAndroid = AndroidInitializationSettings(
@@ -68,3 +71,4 @@ class AppNotificationFactory extends NotificationFactory {
     );
   }
 }
+

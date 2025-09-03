@@ -9,11 +9,15 @@ class FirebasePushTokenGenerator implements PushTokenGenerator {
 
   @override
   Future<void> generateToken({required ValueChanged<String> onSuccess, required ValueChanged<String> onFailure}) async {
-    final String? token = await _messaging.getToken();
-    if (token != null) {
-      onSuccess(token);
-    } else {
-      onFailure("Failed to Fetch Token");
+    try {
+      final String? token = await _messaging.getToken();
+      if (token != null) {
+        onSuccess(token);
+      } else {
+        onFailure("Failed to Fetch Token");
+      }
+    } catch (e) {
+        onFailure(e.toString());
     }
   }
 

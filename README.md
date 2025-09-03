@@ -7,6 +7,19 @@ A dart Notifications package that handles Notifications
 
 ## Getting started
 
+### Steps:
+1. Run the following command while on the root of your flutter project:
+    ```bash
+    mkdir -p core/notifications_flutter && cd core/notifications_flutter
+    git clone "https://github.com/lenblazy/notifications_flutter.git" .
+    flutter pub get
+    ```
+2. Run the following command to add it as part of the local packages:
+    ```bash
+   
+   flutter pub get
+    ```
+
 ### Android
 ---
 - Minimum compile SDK supported `35`
