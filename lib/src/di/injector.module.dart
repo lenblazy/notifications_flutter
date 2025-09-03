@@ -10,7 +10,7 @@ import 'package:flutter_notifications/src/di/notifications_module.dart'
     as _i258;
 import 'package:flutter_notifications/src/push/firebase/app_firebase_messaging_service.dart'
     as _i870;
-import 'package:flutter_notifications/src/push/notification_factory.dart'
+import 'package:flutter_notifications/src/push/notification/notification_factory.dart'
     as _i107;
 import 'package:flutter_notifications/src/push/push_handler.dart' as _i214;
 import 'package:flutter_notifications/src/push/push_message_mapper.dart'

@@ -1,4 +1,4 @@
-import "notification_factory.dart";
+import "notification/notification_factory.dart";
 import "push_message.dart";
 
 abstract class PushHandler {

@@ -1,19 +1,8 @@
 import "package:flutter/foundation.dart";
 import "package:flutter_local_notifications/flutter_local_notifications.dart";
-import "package:fluttertoast/fluttertoast.dart";
 
-import "push_message.dart";
-
-/// Creates a notification
-///
-abstract class NotificationFactory {
-  /// Handles creation of a [Notification] object
-  ///
-  /// @param context [Application Context][Context.getApplicationContext]
-  /// @param message [Push Message][PushMessage]
-  ///
-  Future<void> createNotification(PushMessage message);
-}
+import "../../../notifications.dart";
+import "notification_factory.dart";
 
 class AppNotificationFactory extends NotificationFactory {
   AppNotificationFactory._();
@@ -49,48 +38,33 @@ class AppNotificationFactory extends NotificationFactory {
   }
 
   Future<void> _init() async {
-    if (!kIsWeb) {
-      const initializationSettingsAndroid = AndroidInitializationSettings(
-        "@mipmap/ic_launcher",
-      );
-      const initializationSettings = InitializationSettings(
-        android: initializationSettingsAndroid,
-      );
-      await _localNotifications.initialize(
-        initializationSettings,
-        onDidReceiveNotificationResponse: onDidReceiveNotification,
-        onDidReceiveBackgroundNotificationResponse: onDidReceiveNotification,
-      );
-    }
-
     await _localNotifications
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >()
         ?.requestNotificationsPermission();
+
+    const initializationSettingsAndroid = AndroidInitializationSettings(
+      "@mipmap/ic_launcher",
+    );
+    const initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+    await _localNotifications.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: onDidReceiveNotification,
+      onDidReceiveBackgroundNotificationResponse: onDidReceiveNotification,
+    );
   }
 
   @override
   Future<void> createNotification(PushMessage message) async {
-    try {
-      if (!kIsWeb) {
-        await _localNotifications.show(
-          message.hashCode,
-          message.title,
-          message.body,
-          _notificationDetails,
-          payload: message.toString(),
-        );
-        return;
-      }
-
-      await Fluttertoast.showToast(
-          msg: message.body,
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.TOP_RIGHT,
-      );
-    } catch (e) {
-      debugPrint("Error showing notification: $e");
-    }
+    await _localNotifications.show(
+      message.hashCode,
+      message.title,
+      message.body,
+      _notificationDetails,
+      payload: message.toString(),
+    );
   }
 }
