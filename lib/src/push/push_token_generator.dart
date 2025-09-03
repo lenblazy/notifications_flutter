@@ -1,4 +1,4 @@
-import "package:flutter/foundation.dart" show ValueChanged, VoidCallback;
+import "package:flutter/foundation.dart" show ValueChanged;
 
 /// Handles generating push tokens.
 ///

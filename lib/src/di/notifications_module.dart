@@ -9,9 +9,12 @@ import "../push/push_token_generator.dart";
 
 @module
 abstract class NotificationsModule {
+  @preResolve
+  Future<NotificationFactory> notificationsFactory() async =>
+      AppNotificationFactory.create();
 
   @lazySingleton
-  PushHandler pushHandler(NotificationFactory factory) =>
+  PushHandler pushHandler({required NotificationFactory factory}) =>
       AppPushHandler(notificationFactory: factory);
 
   @lazySingleton
@@ -21,11 +24,11 @@ abstract class NotificationsModule {
   PushTokenGenerator tokenGenerator() => FirebasePushTokenGenerator();
 
   @lazySingleton
-  AppFirebaseMessagingService messagingService(PushHandler handler, PushMessageMapper mapper) {
-    return AppFirebaseMessagingService(pushHandler: handler, pushMessageMapper: mapper);
-  }
-
-  @lazySingleton
-  NotificationFactory notificationsFactory() => AppNotificationFactory();
-
+  AppFirebaseMessagingService messagingService(
+    PushHandler handler,
+    PushMessageMapper mapper,
+  ) => AppFirebaseMessagingService(
+    pushHandler: handler,
+    pushMessageMapper: mapper,
+  );
 }

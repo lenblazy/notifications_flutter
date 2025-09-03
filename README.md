@@ -28,11 +28,18 @@ dart run build_runner build --delete-conflicting-outputs
 
 ### Android
 ---
-
 - Minimum compile SDK supported `35`
+
+- Requires desugaring API on Android
 ```kotlin
 android {
-    compileSdk = 35
+    compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+    }
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 ```
 

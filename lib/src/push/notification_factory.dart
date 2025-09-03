@@ -1,5 +1,6 @@
 import "package:flutter/foundation.dart";
 import "package:flutter_local_notifications/flutter_local_notifications.dart";
+import "package:fluttertoast/fluttertoast.dart";
 
 import "push_message.dart";
 
@@ -15,7 +16,16 @@ abstract class NotificationFactory {
 }
 
 class AppNotificationFactory extends NotificationFactory {
+  AppNotificationFactory._();
+
+  static Future<AppNotificationFactory> create() async {
+    final factory = AppNotificationFactory._();
+    await factory._init();
+    return factory;
+  }
+
   final _localNotifications = FlutterLocalNotificationsPlugin();
+
   final _notificationDetails = const NotificationDetails(
     android: AndroidNotificationDetails(
       "high_importance_channel",
@@ -32,12 +42,13 @@ class AppNotificationFactory extends NotificationFactory {
     ),
   );
 
-  Future<void> onDidReceiveNotification(NotificationResponse response) async {
+  static Future<void> onDidReceiveNotification(
+    NotificationResponse response,
+  ) async {
     debugPrint("Notification clicked: ${response.payload}");
-    // Handle notification click
   }
 
-  Future<void> init() async {
+  Future<void> _init() async {
     if (!kIsWeb) {
       const initializationSettingsAndroid = AndroidInitializationSettings(
         "@mipmap/ic_launcher",
@@ -52,7 +63,6 @@ class AppNotificationFactory extends NotificationFactory {
       );
     }
 
-    // Request permission for android
     await _localNotifications
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
@@ -62,12 +72,25 @@ class AppNotificationFactory extends NotificationFactory {
 
   @override
   Future<void> createNotification(PushMessage message) async {
-    await _localNotifications.show(
-      message.hashCode,
-      message.title,
-      message.body,
-      _notificationDetails,
-      payload: message.toString(),
-    );
+    try {
+      if (!kIsWeb) {
+        await _localNotifications.show(
+          message.hashCode,
+          message.title,
+          message.body,
+          _notificationDetails,
+          payload: message.toString(),
+        );
+        return;
+      }
+
+      await Fluttertoast.showToast(
+          msg: message.body,
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.TOP_RIGHT,
+      );
+    } catch (e) {
+      debugPrint("Error showing notification: $e");
+    }
   }
 }

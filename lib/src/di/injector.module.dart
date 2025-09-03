@@ -22,16 +22,18 @@ import 'package:injectable/injectable.dart' as _i526;
 class FlutterNotificationsPackageModule extends _i526.MicroPackageModule {
 // initializes the registration of main-scope dependencies inside of GetIt
   @override
-  _i687.FutureOr<void> init(_i526.GetItHelper gh) {
+  _i687.FutureOr<void> init(_i526.GetItHelper gh) async {
     final notificationsModule = _$NotificationsModule();
+    await gh.factoryAsync<_i107.NotificationFactory>(
+      () => notificationsModule.notificationsFactory(),
+      preResolve: true,
+    );
     gh.lazySingleton<_i417.PushMessageMapper>(
         () => notificationsModule.pushMapper());
     gh.lazySingleton<_i794.PushTokenGenerator>(
         () => notificationsModule.tokenGenerator());
-    gh.lazySingleton<_i107.NotificationFactory>(
-        () => notificationsModule.notificationsFactory());
-    gh.lazySingleton<_i214.PushHandler>(
-        () => notificationsModule.pushHandler(gh<_i107.NotificationFactory>()));
+    gh.lazySingleton<_i214.PushHandler>(() => notificationsModule.pushHandler(
+        factory: gh<_i107.NotificationFactory>()));
     gh.lazySingleton<_i870.AppFirebaseMessagingService>(
         () => notificationsModule.messagingService(
               gh<_i214.PushHandler>(),

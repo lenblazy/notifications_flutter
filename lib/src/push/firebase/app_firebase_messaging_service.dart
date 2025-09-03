@@ -30,15 +30,12 @@ class AppFirebaseMessagingService {
   }
 
   Future<void> _setupMessageHandlers() async {
-    //foreground message
     FirebaseMessaging.onMessage.listen((message) async {
       await pushHandler.handle(pushMessageMapper.map(message));
     });
 
-    // background message
     FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundMessage);
 
-    // opened app
     RemoteMessage? initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
       await _handleBackgroundMessage(initialMessage);
