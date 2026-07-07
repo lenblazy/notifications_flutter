@@ -5,9 +5,7 @@ import "package:mocktail/mocktail.dart";
 import "package:notifications_flutter/src/di/notifications_module.dart";
 import "package:notifications_flutter/src/push/firebase/app_firebase_messaging_service.dart";
 import "package:notifications_flutter/src/push/firebase/firebase_push_token_generator.dart";
-import "package:notifications_flutter/src/push/notification/app_notification_factory.dart";
 import "package:notifications_flutter/src/push/notification/notification_factory.dart";
-import "package:notifications_flutter/src/push/notification/web_notification_factory.dart";
 import "package:notifications_flutter/src/push/push_handler.dart";
 import "package:notifications_flutter/src/push/push_message_mapper.dart";
 
@@ -101,7 +99,7 @@ void main() {
   );
 
   test("messagingService returns AppFirebaseMessagingService", () {
-    final service = module.messagingService(
+    final AppFirebaseMessagingService service = module.messagingService(
       PushHandler((_) {}),
       PushMessageMapper(),
       messagingClient: FakeFirebaseMessagingClient(),

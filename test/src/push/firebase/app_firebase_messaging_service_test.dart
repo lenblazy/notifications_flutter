@@ -74,7 +74,7 @@ void main() {
   });
 
   test("background handler maps message and handles it", () async {
-    final remoteMessage = const RemoteMessage(
+    const remoteMessage = RemoteMessage(
       data: {
         "title": "Title",
         "body": "Body",
@@ -98,7 +98,7 @@ void main() {
   test(
     "background handler uses default callback logger when handler omitted",
     () async {
-      final remoteMessage = const RemoteMessage(
+      const remoteMessage = RemoteMessage(
         data: {
           "title": "Title",
           "body": "Body",
@@ -126,7 +126,7 @@ void main() {
       BackgroundMessageHandler? registeredHandler;
       const initialMessage = RemoteMessage();
       when(
-        () => messaging.getInitialMessage(),
+        messaging.getInitialMessage,
       ).thenAnswer((_) async => initialMessage);
       final client = DefaultFirebaseMessagingClient(
         messaging: messaging,
@@ -140,7 +140,7 @@ void main() {
       expect(await client.getInitialMessage(), initialMessage);
       client.registerOnBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-      verify(() => messaging.getInitialMessage()).called(1);
+      verify(messaging.getInitialMessage).called(1);
       expect(registeredHandler, firebaseMessagingBackgroundHandler);
       await onMessage.close();
       await onMessageOpenedApp.close();
@@ -154,7 +154,7 @@ void main() {
       final onMessage = StreamController<RemoteMessage>.broadcast();
       final onMessageOpenedApp = StreamController<RemoteMessage>.broadcast();
       BackgroundMessageHandler? registeredHandler;
-      when(() => messaging.getInitialMessage()).thenAnswer((_) async => null);
+      when(messaging.getInitialMessage).thenAnswer((_) async => null);
       final client = DefaultFirebaseMessagingClient(
         messagingProvider: () => messaging,
         onMessageStreamProvider: () => onMessage.stream,
@@ -178,7 +178,7 @@ void main() {
     "DefaultFirebaseMessagingClient can call the built-in registrar",
     () async {
       final messaging = MockFirebaseMessaging();
-      when(() => messaging.getInitialMessage()).thenAnswer((_) async => null);
+      when(messaging.getInitialMessage).thenAnswer((_) async => null);
       final client = DefaultFirebaseMessagingClient(
         messagingProvider: () => messaging,
         onMessageStreamProvider: Stream<RemoteMessage>.empty,
@@ -237,9 +237,9 @@ void main() {
   });
 
   test("constructor uses messagingClientFactory and default logger", () async {
-    final originalDebugPrint = debugPrint;
+    final DebugPrintCallback originalDebugPrint = debugPrint;
     final createdClient = FakeFirebaseMessagingClient();
-    final remoteMessage = const RemoteMessage();
+    const remoteMessage = RemoteMessage();
     final logged = <String?>[];
     debugPrint = (String? message, {int? wrapWidth}) {
       logged.add(message);

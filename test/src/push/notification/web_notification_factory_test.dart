@@ -6,7 +6,7 @@ import "package:notifications_flutter/src/push/push_message.dart";
 void main() {
   test("createNotification shows a toast with the message body", () async {
     final calls = <({String msg, ToastGravity gravity})>[];
-    final factory = await WebNotificationFactory.create(
+    final WebNotificationFactory factory = await WebNotificationFactory.create(
       showToast: ({required msg, required gravity}) async {
         calls.add((msg: msg, gravity: gravity));
         return true;

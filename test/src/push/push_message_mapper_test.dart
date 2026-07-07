@@ -5,7 +5,7 @@ import "package:notifications_flutter/src/push/push_message_mapper.dart";
 
 void main() {
   test("map converts RemoteMessage data to PushMessage", () {
-    final message = const RemoteMessage(
+    const message = RemoteMessage(
       data: {
         "title": "Title",
         "body": "Body",

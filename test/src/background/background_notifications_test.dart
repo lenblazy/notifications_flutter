@@ -47,7 +47,7 @@ void main() {
   );
 
   test("showWMNotification builds and shows a notification", () async {
-    final now = DateTime(2026, 7, 7, 10, 0, 0);
+    final now = DateTime(2026, 7, 7, 10);
 
     await showWMNotification(
       title: "Title",

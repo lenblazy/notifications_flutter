@@ -123,7 +123,7 @@ void main() {
   });
 
   test("create initializes plugin permissions and callbacks", () async {
-    final createdFactory = await AppNotificationFactory.create(plugin: plugin);
+    final AppNotificationFactory createdFactory = await AppNotificationFactory.create(plugin: plugin);
 
     expect(createdFactory, isA<AppNotificationFactory>());
     verify(() => androidPlugin.requestNotificationsPermission()).called(1);
@@ -145,7 +145,7 @@ void main() {
     () async {
       AppNotificationFactory? initializedFactory;
 
-      final createdFactory = await AppNotificationFactory.create(
+      final AppNotificationFactory createdFactory = await AppNotificationFactory.create(
         initializer: (factory) async {
           initializedFactory = factory;
         },

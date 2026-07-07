@@ -66,9 +66,7 @@ class DefaultFirebaseMessagingClient implements FirebaseMessagingClient {
       return onBackgroundMessageRegistrarProvider()!;
     }
 
-    return (handler) {
-      FirebaseMessaging.onBackgroundMessage(handler);
-    };
+    return FirebaseMessaging.onBackgroundMessage;
   }
 
   @override
@@ -93,7 +91,7 @@ Future<void> firebaseMessagingBackgroundHandler(
   PushMessageMapper? pushMessageMapper,
   void Function(String)? logger,
 }) async {
-  final handler =
+  final PushHandler handler =
       pushHandler ??
       PushHandler((mappedMessage) {
         (logger ?? debugPrint)("Anonymous handler for: ${mappedMessage.body}");
@@ -132,14 +130,14 @@ class AppFirebaseMessagingService {
 
     _messagingClient.onMessageOpenedApp.listen(_handleBackgroundMessage);
 
-    final initialMessage = await _messagingClient.getInitialMessage();
+    final RemoteMessage? initialMessage = await _messagingClient.getInitialMessage();
     if (initialMessage != null) {
       await _handleBackgroundMessage(initialMessage);
     }
   }
 
   Future<void> _handleBackgroundMessage(RemoteMessage message) async {
-    final pushMsg = pushMessageMapper.map(message);
+    final PushMessage pushMsg = pushMessageMapper.map(message);
     await pushHandler.handle(pushMsg);
     _logger(pushMsg.toString());
   }
