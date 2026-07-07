@@ -10,5 +10,3 @@ abstract class NotificationFactory {
   ///
   Future<void> createNotification(PushMessage message);
 }
-
-

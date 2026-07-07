@@ -22,7 +22,7 @@ import 'package:notifications_flutter/src/push/push_token_generator.dart'
     as _i773;
 
 class NotificationsFlutterPackageModule extends _i526.MicroPackageModule {
-// initializes the registration of main-scope dependencies inside of GetIt
+  // initializes the registration of main-scope dependencies inside of GetIt
   @override
   _i687.FutureOr<void> init(_i526.GetItHelper gh) async {
     final notificationsModule = _$NotificationsModule();
@@ -35,18 +35,27 @@ class NotificationsFlutterPackageModule extends _i526.MicroPackageModule {
       preResolve: true,
     );
     gh.lazySingleton<_i892.FirebaseMessaging>(
-        () => notificationsModule.firebaseMessaging());
+      () => notificationsModule.firebaseMessaging(),
+    );
     gh.lazySingleton<_i216.PushMessageMapper>(
-        () => notificationsModule.pushMapper());
-    gh.lazySingleton<_i82.PushHandler>(() => notificationsModule.pushHandler(
-        factory: gh<_i754.NotificationFactory>()));
+      () => notificationsModule.pushMapper(),
+    );
+    gh.lazySingleton<_i82.PushHandler>(
+      () => notificationsModule.pushHandler(
+        factory: gh<_i754.NotificationFactory>(),
+      ),
+    );
     gh.lazySingleton<_i590.AppFirebaseMessagingService>(
-        () => notificationsModule.messagingService(
-              gh<_i82.PushHandler>(),
-              gh<_i216.PushMessageMapper>(),
-            ));
-    gh.lazySingleton<_i773.PushTokenGenerator>(() => notificationsModule
-        .tokenGenerator(messaging: gh<_i892.FirebaseMessaging>()));
+      () => notificationsModule.messagingService(
+        gh<_i82.PushHandler>(),
+        gh<_i216.PushMessageMapper>(),
+      ),
+    );
+    gh.lazySingleton<_i773.PushTokenGenerator>(
+      () => notificationsModule.tokenGenerator(
+        messaging: gh<_i892.FirebaseMessaging>(),
+      ),
+    );
   }
 }
 

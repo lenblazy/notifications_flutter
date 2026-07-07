@@ -1,5 +1,7 @@
+import "package:core_flutter/core.dart";
 import "package:flutter_local_notifications/flutter_local_notifications.dart";
 import "package:flutter_test/flutter_test.dart";
+import "package:get_it/get_it.dart";
 import "package:mocktail/mocktail.dart";
 import "package:notifications_flutter/src/push/notification/app_notification_factory.dart";
 import "package:notifications_flutter/src/push/push_message.dart";
@@ -10,74 +12,147 @@ class MockFlutterLocalNotificationsPlugin extends Mock
 class MockAndroidFlutterLocalNotificationsPlugin extends Mock
     implements AndroidFlutterLocalNotificationsPlugin {}
 
-/// Fake classes for parameters
-class InitializationSettingsFake extends Fake
+class MockAppNavigator extends Mock implements AppNavigator {}
+
+class FakeNotificationDetails extends Fake implements NotificationDetails {}
+
+class FakeInitializationSettings extends Fake
     implements InitializationSettings {}
 
-class NotificationDetailsFake extends Fake implements NotificationDetails {}
-
 void main() {
-  late MockFlutterLocalNotificationsPlugin mockPlugin;
+  late MockFlutterLocalNotificationsPlugin plugin;
+  late MockAndroidFlutterLocalNotificationsPlugin androidPlugin;
   late AppNotificationFactory factory;
 
   setUpAll(() {
-    // Register fakes so mocktail can use `any()` safely
-    registerFallbackValue(InitializationSettingsFake());
-    registerFallbackValue(NotificationDetailsFake());
+    registerFallbackValue(FakeNotificationDetails());
+    registerFallbackValue(FakeInitializationSettings());
   });
 
   setUp(() {
-    mockPlugin = MockFlutterLocalNotificationsPlugin();
-    factory = AppNotificationFactory(plugin: mockPlugin);
+    GetIt.I.reset();
+    plugin = MockFlutterLocalNotificationsPlugin();
+    androidPlugin = MockAndroidFlutterLocalNotificationsPlugin();
+    factory = AppNotificationFactory(plugin: plugin);
+    when(
+      () => plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >(),
+    ).thenReturn(androidPlugin);
+    when(
+      () => androidPlugin.requestNotificationsPermission(),
+    ).thenAnswer((_) async => true);
+    when(
+      () => plugin.initialize(
+        settings: any(named: "settings"),
+        onDidReceiveNotificationResponse: any(
+          named: "onDidReceiveNotificationResponse",
+        ),
+        onDidReceiveBackgroundNotificationResponse: any(
+          named: "onDidReceiveBackgroundNotificationResponse",
+        ),
+      ),
+    ).thenAnswer((_) async => true);
+    when(
+      () => plugin.show(
+        id: any(named: "id"),
+        title: any(named: "title"),
+        body: any(named: "body"),
+        notificationDetails: any(named: "notificationDetails"),
+        payload: any(named: "payload"),
+      ),
+    ).thenAnswer((_) async {});
   });
 
-  group("AppNotificationFactory", () {
-    test("should call show with correct parameters when creating a notification",
-            () async {
-          // Arrange
-          const message = PushMessage(
-            title: "Test Title",
-            body: "Test Body",
-            deeplink: "deeplink",
-            type: "type",
-          );
+  tearDown(() async {
+    await GetIt.I.reset();
+  });
 
-          when(() => mockPlugin.show(
-            any(),
-            any(),
-            any(),
-            any(),
-            payload: any(named: "payload"),
-          )).thenAnswer((_) async => {});
-
-          // Act
-          await factory.createNotification(message);
-
-          // Assert
-          verify(() => mockPlugin.show(
-            message.hashCode,
-            message.title,
-            message.body,
-            any(that: isA<NotificationDetails>()),
-            payload: message.toString(),
-          )).called(1);
-        });
-
-    test("onDidReceiveNotification logs clicked notification payload", () async {
-      // Arrange
-      const response = NotificationResponse(
-        id: 1,
-        notificationResponseType: NotificationResponseType.selectedNotification,
-        payload: "test_payload",
+  test(
+    "createNotification shows local notification with deeplink payload",
+    () async {
+      const message = PushMessage(
+        title: "Test Title",
+        body: "Test Body",
+        deeplink: "/notifications/1",
+        type: "type",
       );
 
-      // Act
-      await AppNotificationFactory.onDidReceiveNotification(response);
+      await factory.createNotification(message);
 
-      // Assert → no exception is thrown
-      expect(true, isTrue);
-    });
+      verify(
+        () => plugin.show(
+          id: message.hashCode,
+          title: message.title,
+          body: message.body,
+          notificationDetails: any(named: "notificationDetails"),
+          payload: message.deeplink,
+        ),
+      ).called(1);
+    },
+  );
 
+  test("onDidReceiveNotification opens the payload deeplink", () async {
+    const response = NotificationResponse(
+      id: 1,
+      notificationResponseType: NotificationResponseType.selectedNotification,
+      payload: "/notifications/1",
+    );
+    String? deeplink;
+
+    await AppNotificationFactory.onDidReceiveNotification(
+      response,
+      openDeepLink: (value) => deeplink = value,
+    );
+
+    expect(deeplink, "/notifications/1");
   });
-}
 
+  test("onDidReceiveNotification uses GetIt navigator by default", () async {
+    final navigator = MockAppNavigator();
+    GetIt.I.registerSingleton<AppNavigator>(navigator);
+    const response = NotificationResponse(
+      notificationResponseType: NotificationResponseType.selectedNotification,
+      payload: "/notifications/2",
+    );
+
+    await AppNotificationFactory.onDidReceiveNotification(response);
+
+    verify(() => navigator.toDeepLink("/notifications/2")).called(1);
+  });
+
+  test("create initializes plugin permissions and callbacks", () async {
+    final createdFactory = await AppNotificationFactory.create(plugin: plugin);
+
+    expect(createdFactory, isA<AppNotificationFactory>());
+    verify(() => androidPlugin.requestNotificationsPermission()).called(1);
+    verify(
+      () => plugin.initialize(
+        settings: any(named: "settings"),
+        onDidReceiveNotificationResponse: any(
+          named: "onDidReceiveNotificationResponse",
+        ),
+        onDidReceiveBackgroundNotificationResponse: any(
+          named: "onDidReceiveBackgroundNotificationResponse",
+        ),
+      ),
+    ).called(1);
+  });
+
+  test(
+    "create can build with default plugin when initializer is injected",
+    () async {
+      AppNotificationFactory? initializedFactory;
+
+      final createdFactory = await AppNotificationFactory.create(
+        initializer: (factory) async {
+          initializedFactory = factory;
+        },
+      );
+
+      expect(createdFactory, isA<AppNotificationFactory>());
+      expect(initializedFactory, same(createdFactory));
+    },
+  );
+}

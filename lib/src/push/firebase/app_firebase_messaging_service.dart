@@ -5,46 +5,142 @@ import "../push_handler.dart";
 import "../push_message.dart";
 import "../push_message_mapper.dart";
 
+abstract class FirebaseMessagingClient {
+  Stream<RemoteMessage> get onMessage;
+  Stream<RemoteMessage> get onMessageOpenedApp;
+
+  Future<RemoteMessage?> getInitialMessage();
+  void registerOnBackgroundMessage(BackgroundMessageHandler handler);
+}
+
+class DefaultFirebaseMessagingClient implements FirebaseMessagingClient {
+  DefaultFirebaseMessagingClient({
+    FirebaseMessaging? messaging,
+    FirebaseMessaging Function()? messagingProvider,
+    Stream<RemoteMessage>? onMessageStream,
+    Stream<RemoteMessage> Function()? onMessageStreamProvider,
+    Stream<RemoteMessage>? onMessageOpenedAppStream,
+    Stream<RemoteMessage> Function()? onMessageOpenedAppStreamProvider,
+    void Function(BackgroundMessageHandler handler)?
+    onBackgroundMessageRegistrar,
+    void Function(BackgroundMessageHandler handler)? Function()?
+    onBackgroundMessageRegistrarProvider,
+  }) : _messaging = messaging ?? _defaultMessaging(messagingProvider),
+       _onMessageStream =
+           onMessageStream ?? _defaultOnMessage(onMessageStreamProvider),
+       _onMessageOpenedAppStream =
+           onMessageOpenedAppStream ??
+           _defaultOnMessageOpenedApp(onMessageOpenedAppStreamProvider),
+       _onBackgroundMessageRegistrar =
+           onBackgroundMessageRegistrar ??
+           _defaultOnBackgroundMessageRegistrar(
+             onBackgroundMessageRegistrarProvider,
+           );
+
+  final FirebaseMessaging _messaging;
+  final Stream<RemoteMessage> _onMessageStream;
+  final Stream<RemoteMessage> _onMessageOpenedAppStream;
+  final void Function(BackgroundMessageHandler handler)
+  _onBackgroundMessageRegistrar;
+
+  static FirebaseMessaging _defaultMessaging(
+    FirebaseMessaging Function()? messagingProvider,
+  ) => (messagingProvider ?? (() => FirebaseMessaging.instance))();
+
+  static Stream<RemoteMessage> _defaultOnMessage(
+    Stream<RemoteMessage> Function()? onMessageStreamProvider,
+  ) => (onMessageStreamProvider ?? (() => FirebaseMessaging.onMessage))();
+
+  static Stream<RemoteMessage> _defaultOnMessageOpenedApp(
+    Stream<RemoteMessage> Function()? onMessageOpenedAppStreamProvider,
+  ) =>
+      (onMessageOpenedAppStreamProvider ??
+      (() => FirebaseMessaging.onMessageOpenedApp))();
+
+  static void Function(BackgroundMessageHandler handler)
+  _defaultOnBackgroundMessageRegistrar(
+    void Function(BackgroundMessageHandler handler)? Function()?
+    onBackgroundMessageRegistrarProvider,
+  ) {
+    if (onBackgroundMessageRegistrarProvider != null) {
+      return onBackgroundMessageRegistrarProvider()!;
+    }
+
+    return (handler) {
+      FirebaseMessaging.onBackgroundMessage(handler);
+    };
+  }
+
+  @override
+  Stream<RemoteMessage> get onMessage => _onMessageStream;
+
+  @override
+  Stream<RemoteMessage> get onMessageOpenedApp => _onMessageOpenedAppStream;
+
+  @override
+  Future<RemoteMessage?> getInitialMessage() => _messaging.getInitialMessage();
+
+  @override
+  void registerOnBackgroundMessage(BackgroundMessageHandler handler) {
+    _onBackgroundMessageRegistrar(handler);
+  }
+}
+
 @pragma("vm:entry-point")
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  final handler = PushHandler((message) {
-    debugPrint("Anonymous handler for: ${message.body}");
-  });
-  await handler.handle(PushMessageMapper().map(message));
+Future<void> firebaseMessagingBackgroundHandler(
+  RemoteMessage message, {
+  PushHandler? pushHandler,
+  PushMessageMapper? pushMessageMapper,
+  void Function(String)? logger,
+}) async {
+  final handler =
+      pushHandler ??
+      PushHandler((mappedMessage) {
+        (logger ?? debugPrint)("Anonymous handler for: ${mappedMessage.body}");
+      });
+  await handler.handle((pushMessageMapper ?? PushMessageMapper()).map(message));
 }
 
 class AppFirebaseMessagingService {
   AppFirebaseMessagingService({
     required this.pushHandler,
     required this.pushMessageMapper,
-  });
+    FirebaseMessagingClient? messagingClient,
+    FirebaseMessagingClient Function()? messagingClientFactory,
+    void Function(String)? logger,
+  }) : _messagingClient =
+           messagingClient ??
+           (messagingClientFactory ?? DefaultFirebaseMessagingClient.new)(),
+       _logger = logger ?? debugPrint;
 
   final PushHandler pushHandler;
   final PushMessageMapper pushMessageMapper;
-
-  final _messaging = FirebaseMessaging.instance;
+  final FirebaseMessagingClient _messagingClient;
+  final void Function(String) _logger;
 
   Future<void> initialize() async {
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    _messagingClient.registerOnBackgroundMessage(
+      firebaseMessagingBackgroundHandler,
+    );
     await _setupMessageHandlers();
   }
 
   Future<void> _setupMessageHandlers() async {
-    FirebaseMessaging.onMessage.listen((message) async {
+    _messagingClient.onMessage.listen((message) async {
       await pushHandler.handle(pushMessageMapper.map(message));
     });
 
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundMessage);
+    _messagingClient.onMessageOpenedApp.listen(_handleBackgroundMessage);
 
-    RemoteMessage? initialMessage = await _messaging.getInitialMessage();
+    final initialMessage = await _messagingClient.getInitialMessage();
     if (initialMessage != null) {
       await _handleBackgroundMessage(initialMessage);
     }
   }
 
   Future<void> _handleBackgroundMessage(RemoteMessage message) async {
-    PushMessage pushMsg = pushMessageMapper.map(message);
+    final pushMsg = pushMessageMapper.map(message);
     await pushHandler.handle(pushMsg);
-    debugPrint(pushMsg.toString());
+    _logger(pushMsg.toString());
   }
 }

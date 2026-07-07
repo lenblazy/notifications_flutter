@@ -3,16 +3,27 @@ import "package:fluttertoast/fluttertoast.dart";
 import "../../../notifications.dart";
 import "notification_factory.dart";
 
-class WebNotificationFactory extends NotificationFactory {
-  WebNotificationFactory._();
+typedef ToastPresenter =
+    Future<bool?> Function({
+      required String msg,
+      required ToastGravity gravity,
+    });
 
-  static Future<WebNotificationFactory> create() async {
-    final factory = WebNotificationFactory._();
+class WebNotificationFactory extends NotificationFactory {
+  WebNotificationFactory._({ToastPresenter? showToast})
+    : _showToast = showToast ?? Fluttertoast.showToast;
+
+  final ToastPresenter _showToast;
+
+  static Future<WebNotificationFactory> create({
+    ToastPresenter? showToast,
+  }) async {
+    final factory = WebNotificationFactory._(showToast: showToast);
     return factory;
   }
 
   @override
   Future<void> createNotification(PushMessage message) async {
-    await Fluttertoast.showToast(msg: message.body, gravity: ToastGravity.TOP_RIGHT);
+    await _showToast(msg: message.body, gravity: ToastGravity.TOP_RIGHT);
   }
 }

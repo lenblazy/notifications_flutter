@@ -49,7 +49,9 @@ void main() {
 
   test("should call onFailure when exception occurs", () async {
     // Arrange
-    when(() => mockMessaging.getToken()).thenThrow(Exception("Error fetching Token"));
+    when(
+      () => mockMessaging.getToken(),
+    ).thenThrow(Exception("Error fetching Token"));
 
     // Act
     String? error;

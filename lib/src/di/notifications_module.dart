@@ -14,19 +14,41 @@ import "../push/push_token_generator.dart";
 
 @module
 abstract class NotificationsModule {
+  NotificationsModule({
+    Future<FirebaseApp> Function()? initializeFirebaseApp,
+    FirebaseMessaging Function()? firebaseMessagingProvider,
+    Future<NotificationFactory> Function()? webNotificationFactoryCreator,
+    Future<NotificationFactory> Function()? appNotificationFactoryCreator,
+    bool? isWeb,
+  }) : _initializeFirebaseApp = initializeFirebaseApp ?? Firebase.initializeApp,
+       _firebaseMessagingProvider =
+           firebaseMessagingProvider ?? (() => FirebaseMessaging.instance),
+       _webNotificationFactoryCreator =
+           webNotificationFactoryCreator ?? WebNotificationFactory.create,
+       _appNotificationFactoryCreator =
+           appNotificationFactoryCreator ?? AppNotificationFactory.create,
+       _isWeb = isWeb ?? kIsWeb;
+
+  final Future<FirebaseApp> Function() _initializeFirebaseApp;
+  final FirebaseMessaging Function() _firebaseMessagingProvider;
+  final Future<NotificationFactory> Function() _webNotificationFactoryCreator;
+  final Future<NotificationFactory> Function() _appNotificationFactoryCreator;
+  final bool _isWeb;
+
   @preResolve
-  Future<FirebaseApp> provideFirebaseApp() async => Firebase.initializeApp();
+  Future<FirebaseApp> provideFirebaseApp() async => _initializeFirebaseApp();
 
   @lazySingleton
-  FirebaseMessaging firebaseMessaging() => FirebaseMessaging.instance;
+  FirebaseMessaging firebaseMessaging() => _firebaseMessagingProvider();
 
   @lazySingleton
-  PushTokenGenerator tokenGenerator({required FirebaseMessaging messaging}) => FirebasePushTokenGenerator(messaging);
+  PushTokenGenerator tokenGenerator({required FirebaseMessaging messaging}) =>
+      FirebasePushTokenGenerator(messaging);
 
   @preResolve
-  Future<NotificationFactory> notificationsFactory() async => kIsWeb
-      ? await WebNotificationFactory.create()
-      : await AppNotificationFactory.create();
+  Future<NotificationFactory> notificationsFactory() async => _isWeb
+      ? await _webNotificationFactoryCreator()
+      : await _appNotificationFactoryCreator();
 
   @lazySingleton
   PushHandler pushHandler({required NotificationFactory factory}) =>
@@ -35,13 +57,14 @@ abstract class NotificationsModule {
   @lazySingleton
   PushMessageMapper pushMapper() => PushMessageMapper();
 
-
   @lazySingleton
   AppFirebaseMessagingService messagingService(
     PushHandler handler,
-    PushMessageMapper mapper,
-  ) => AppFirebaseMessagingService(
+    PushMessageMapper mapper, {
+    FirebaseMessagingClient? messagingClient,
+  }) => AppFirebaseMessagingService(
     pushHandler: handler,
     pushMessageMapper: mapper,
+    messagingClient: messagingClient,
   );
 }

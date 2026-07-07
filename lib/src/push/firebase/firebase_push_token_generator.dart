@@ -8,7 +8,10 @@ class FirebasePushTokenGenerator implements PushTokenGenerator {
   final FirebaseMessaging _messaging;
 
   @override
-  Future<void> generateToken({required ValueChanged<String> onSuccess, required ValueChanged<String> onFailure}) async {
+  Future<void> generateToken({
+    required ValueChanged<String> onSuccess,
+    required ValueChanged<String> onFailure,
+  }) async {
     try {
       final String? token = await _messaging.getToken();
       if (token != null) {
@@ -17,8 +20,7 @@ class FirebasePushTokenGenerator implements PushTokenGenerator {
         onFailure("Failed to Fetch Token");
       }
     } catch (e) {
-        onFailure(e.toString());
+      onFailure(e.toString());
     }
   }
-
 }
